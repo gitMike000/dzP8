@@ -1,0 +1,115 @@
+diff --git a/include/Bomb.h b/include/Bomb.h
+index d122e7a..c7b50bf 100644
+--- a/include/Bomb.h
++++ b/include/Bomb.h
+@@ -10,6 +10,8 @@ public:
+ 
+ 	void Draw() const override;
+ 
++    Bomb* Clone() const;
++
+ private:
+ 
+ };
+diff --git a/include/DynamicObject.h b/include/DynamicObject.h
+index b38e36d..a181ac7 100644
+--- a/include/DynamicObject.h
++++ b/include/DynamicObject.h
+@@ -20,4 +20,4 @@ protected:
+     double speed;
+     double xDirction, yDirection;
+ 
+-};
+\ No newline at end of file
++};
+diff --git a/include/SBomber.h b/include/SBomber.h
+index 3ce1b9c..5a8216d 100644
+--- a/include/SBomber.h
++++ b/include/SBomber.h
+@@ -40,7 +40,7 @@ private:
+     std::vector<DestroyableGroundObject*> FindDestoyableGroundObjects() const;
+     std::vector<Bomb*> FindAllBombs() const;
+ 
+-    void DropBomb();
++    void DropBomb(bool dobl);
+ 
+     std::vector<DynamicObject*> vecDynamicObj;
+     std::vector<GameObject*> vecStaticObj;
+@@ -50,4 +50,4 @@ private:
+     uint64_t startTime, finishTime, passedTime;
+     uint16_t bombsNumber, deltaTime, fps;
+     int16_t score;
+-};
+\ No newline at end of file
++};
+diff --git a/src/Bomb.cpp b/src/Bomb.cpp
+index 4008eaa..723c15f 100644
+--- a/src/Bomb.cpp
++++ b/src/Bomb.cpp
+@@ -7,3 +7,7 @@ void Bomb::Draw() const {
+   ScreenSingleton::getInstance().GotoXY(x, y);
+   std::cout << "*";
+ }
++
++Bomb* Bomb::Clone() const {
++    return new Bomb(*this);
++};
+diff --git a/src/SBomber.cpp b/src/SBomber.cpp
+index 4c0eb99..ebc7a0b 100644
+--- a/src/SBomber.cpp
++++ b/src/SBomber.cpp
+@@ -242,13 +242,21 @@ void SBomber::ProcessKBHit() {
+       break;
+ 
+     case 'b':
+-      DropBomb();
++      DropBomb(false);
+       break;
+ 
+     case 'B':
+-      DropBomb();
++      DropBomb(false);
+       break;
+ 
++  case 'd':
++    DropBomb(true);
++    break;
++
++  case 'D':
++    DropBomb(true);
++    break;
++
+     default:
+       break;
+   }
+@@ -258,7 +266,7 @@ void SBomber::DrawFrame() {
+   MyTools::FileLoggerSingletone::getInstance().WriteToLog(std::string(__func__) + " was invoked");
+ 
+   for (size_t i = 0; i < vecDynamicObj.size(); i++) {
+-    if (vecDynamicObj[i] != nullptr) {
++    if (vecDynamicObj[i] != nullptr) {      
+       vecDynamicObj[i]->Draw();
+     }
+   }
+@@ -290,7 +298,7 @@ void SBomber::TimeFinish() {
+   MyTools::FileLoggerSingletone::getInstance().WriteToLog(std::string(__func__) + " deltaTime = ", (int)deltaTime);
+ }
+ 
+-void SBomber::DropBomb() {
++void SBomber::DropBomb(bool dobl) {
+   if (bombsNumber > 0) {
+     MyTools::FileLoggerSingletone::getInstance().WriteToLog(std::string(__func__) + " was invoked");
+ 
+@@ -307,5 +315,12 @@ void SBomber::DropBomb() {
+     vecDynamicObj.push_back(pBomb);
+     bombsNumber--;
+     score -= Bomb::BombCost;
++
++    if (dobl) {
++        Bomb* pBomb1=pBomb->Clone();
++        pBomb1->SetPos(pBomb1->GetX()+2,pBomb1->GetY());
++        vecDynamicObj.push_back(pBomb1);
++    };
++
+   }
+ }
